@@ -11,6 +11,7 @@ from diffusers import (
     EulerDiscreteScheduler,
     EulerAncestralDiscreteScheduler,
     DPMSolverMultistepScheduler,
+    ControlNetModel,
 )
 
 # TODO Put in place a safety checker
@@ -23,10 +24,17 @@ class Predictor(BasePredictor):
     def setup(self):
         """Load the model into memory to make running multiple predictions efficient"""
         print("Loading pipeline...")
+
+        controlnet = [
+            ControlNetModel.from_pretrained("lllyasviel/sd-controlnet-depth", torch_dtype=torch.float16),
+            ControlNetModel.from_pretrained("lllyasviel/sd-controlnet-canny", torch_dtype=torch.float16),
+        ]
+
         self.pipe = StableDiffusionPipeline.from_pretrained(
             MODEL_ID,
             cache_dir=MODEL_CACHE,
             local_files_only=True,
+            controlnet=controlnet,
         ).to("cuda")
 
     @torch.inference_mode()
